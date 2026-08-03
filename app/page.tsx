@@ -44,8 +44,8 @@ export default function Home() {
   }
 
   return (
-    <main className="flex h-screen w-screen overflow-hidden">
-      <div className="w-80 shrink-0">
+    <main className="flex h-screen w-screen gap-6 overflow-hidden bg-slate-100 p-6">
+      <div className="w-96 shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
         <AttendanceList
           records={data.records}
           selectedDate={selectedDate}
@@ -53,9 +53,11 @@ export default function Home() {
         />
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <SummaryBar data={data} />
-        <div className="flex-1 overflow-hidden">
+      <div className="flex flex-1 flex-col gap-6 overflow-hidden">
+        <div className="shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
+          <SummaryBar data={data} />
+        </div>
+        <div className="flex-1 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <AttendanceCalendar
             year={year}
             monthIndex={monthIndex}
