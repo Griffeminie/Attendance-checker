@@ -2,8 +2,11 @@
 
 import type { AttendanceData } from "@/lib/types";
 
-export default function SummaryBar({ data }: { data: AttendanceData }) {
-  const { summary } = data;
+export default function SummaryBar({
+  summary,
+}: {
+  summary: AttendanceData["summary"];
+}) {
   const pct = Math.min(
     100,
     Math.round((summary.totalActualHours / summary.requiredHours) * 100)

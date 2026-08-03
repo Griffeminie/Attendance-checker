@@ -69,3 +69,36 @@ export function toDateKey(d: Date): string {
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
+
+// Computes raw/actual hours from a time-in/time-out pair, applying the same
+// "deduct 1hr lunch if the span crosses 12:00-13:00" rule as the seed data.
+export function computeHoursFromTimes(
+  timeIn: string,
+  timeOut: string
+): { rawHours: number; actualHours: number; lunchDeducted: boolean } {
+  const toDecimal = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    return h + m / 60;
+  };
+  const inDec = toDecimal(timeIn);
+  const outDec = toDecimal(timeOut);
+  const rawHours = Math.max(0, outDec - inDec);
+  const lunchDeducted = inDec < 13 && outDec > 12;
+  const actualHours = lunchDeducted ? Math.max(0, rawHours - 1) : rawHours;
+  return { rawHours, actualHours, lunchDeducted };
+}
+
+export function computeSummary(
+  records: AttendanceRecord[],
+  requiredHours: number
+) {
+  const totalRawHours = records.reduce((sum, r) => sum + r.rawHours, 0);
+  const totalActualHours = records.reduce((sum, r) => sum + r.actualHours, 0);
+  return {
+    totalDaysLogged: records.length,
+    totalRawHours,
+    totalActualHours,
+    requiredHours,
+    remainingHours: Math.max(0, requiredHours - totalActualHours),
+  };
+}

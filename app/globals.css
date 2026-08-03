@@ -11,3 +11,13 @@ body {
   background: #f8fafc;
   color: #0f172a;
 }
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+@keyframes slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+.calendar-slide-right { animation: slide-in-right 0.22s ease-out; }
+.calendar-slide-left { animation: slide-in-left 0.22s ease-out; }
