@@ -1,11 +1,15 @@
 "use client";
 
 import type { AttendanceData } from "@/lib/types";
+import type { CompletionEstimate } from "@/lib/attendance";
+import { formatDateShort } from "@/lib/attendance";
 
 export default function SummaryBar({
   summary,
+  estimate,
 }: {
   summary: AttendanceData["summary"];
+  estimate: CompletionEstimate | null;
 }) {
   const pct = Math.min(
     100,
@@ -31,6 +35,17 @@ export default function SummaryBar({
         <p className="mt-1 text-base font-semibold text-slate-800">
           {summary.remainingHours.toFixed(2)}h
         </p>
+      </div>
+      <div>
+        <p className="text-xs text-slate-400">Est. Finish</p>
+        <p className="mt-1 text-base font-semibold text-slate-800">
+          {estimate ? formatDateShort(estimate.projectedDate) : "—"}
+        </p>
+        {estimate && (
+          <p className="text-[11px] text-slate-400">
+            ~{estimate.avgHoursPerDay.toFixed(1)}h/day avg
+          </p>
+        )}
       </div>
       <div className="ml-2 flex-1">
         <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100">

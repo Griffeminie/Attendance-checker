@@ -1,27 +1,66 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import attendanceData from "@/data/attendance.json";
 import type { AttendanceData, AttendanceRecord } from "@/lib/types";
 import {
   computeHoursFromTimes,
   computeSummary,
+  estimateCompletion,
   recordsByDate,
 } from "@/lib/attendance";
 import AttendanceList from "@/components/AttendanceList";
 import AttendanceCalendar from "@/components/AttendanceCalendar";
 import SummaryBar from "@/components/SummaryBar";
 import EditEntryModal from "@/components/EditEntryModal";
+import CelebrationOverlay from "@/components/CelebrationOverlay";
 
 const data = attendanceData as AttendanceData;
+const STORAGE_KEY = "attendance-checker-records-v1";
 
 export default function Home() {
   const [records, setRecords] = useState<AttendanceRecord[]>(data.records);
+  const [hydrated, setHydrated] = useState(false);
+
+  // Load anything saved in this browser once, on first mount. This has to
+  // happen in an effect (not the useState initializer) so the server-
+  // rendered HTML and the client's first render match — loading from
+  // localStorage during render would cause a hydration mismatch.
+  useEffect(() => {
+    const saved = window.localStorage.getItem(STORAGE_KEY);
+    if (saved) {
+      try {
+        setRecords(JSON.parse(saved));
+      } catch {
+        // ignore corrupt/old data, fall back to the seed data already set
+      }
+    }
+    setHydrated(true);
+  }, []);
+
+  // Persist on every change, but only after the initial load above has run
+  // — otherwise this would immediately overwrite saved data with the seed
+  // data during the brief window before localStorage has been read.
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+  }, [records, hydrated]);
+
   const byDate = useMemo(() => recordsByDate(records), [records]);
   const summary = useMemo(
     () => computeSummary(records, data.meta.requiredHours),
     [records]
   );
+  const estimate = useMemo(
+    () => estimateCompletion(records, data.meta.requiredHours),
+    [records]
+  );
+  const goalMet = summary.remainingHours <= 0 && records.length > 0;
+  const [celebrationDismissed, setCelebrationDismissed] = useState(false);
+
+  useEffect(() => {
+    if (!goalMet) setCelebrationDismissed(false);
+  }, [goalMet]);
 
   // Start the calendar on the month of the most recent record.
   const latest = data.records[data.records.length - 1]?.date ?? "2026-08-01";
@@ -101,7 +140,7 @@ export default function Home() {
 
       <div className="flex flex-1 flex-col gap-6 overflow-hidden">
         <div className="shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-          <SummaryBar summary={summary} />
+          <SummaryBar summary={summary} estimate={estimate} />
         </div>
         <div className="flex-1 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <AttendanceCalendar
@@ -125,6 +164,10 @@ export default function Home() {
           onSave={saveEntry}
           onDelete={deleteEntry}
         />
+      )}
+
+      {goalMet && !celebrationDismissed && (
+        <CelebrationOverlay onDismiss={() => setCelebrationDismissed(true)} />
       )}
     </main>
   );

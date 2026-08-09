@@ -102,3 +102,60 @@ export function computeSummary(
     remainingHours: Math.max(0, requiredHours - totalActualHours),
   };
 }
+
+export function formatDateShort(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  });
+}
+
+export interface CompletionEstimate {
+  projectedDate: string;
+  avgHoursPerDay: number;
+  workdaysNeeded: number;
+}
+
+// Projects when the person will hit requiredHours, based on their average
+// actual hours per logged day so far, then walks forward day-by-day
+// (skipping weekends) that many workdays from today (or their last logged
+// day, whichever is later).
+export function estimateCompletion(
+  records: AttendanceRecord[],
+  requiredHours: number
+): CompletionEstimate | null {
+  if (records.length === 0) return null;
+
+  const totalActualHours = records.reduce((sum, r) => sum + r.actualHours, 0);
+  const avgHoursPerDay = totalActualHours / records.length;
+  if (avgHoursPerDay <= 0) return null;
+
+  const remainingHours = Math.max(0, requiredHours - totalActualHours);
+  if (remainingHours === 0) return null; // requirement already met
+
+  const workdaysNeeded = Math.ceil(remainingHours / avgHoursPerDay);
+
+  const lastRecordDate = records.reduce(
+    (latest, r) => (r.date > latest ? r.date : latest),
+    records[0].date
+  );
+  const today = toDateKey(new Date());
+  const startDateStr = lastRecordDate > today ? lastRecordDate : today;
+  const cursor = new Date(startDateStr + "T00:00:00");
+  cursor.setDate(cursor.getDate() + 1);
+
+  let counted = 0;
+  while (counted < workdaysNeeded) {
+    if (!isWeekend(toDateKey(cursor))) counted++;
+    if (counted === workdaysNeeded) break;
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  return {
+    projectedDate: toDateKey(cursor),
+    avgHoursPerDay,
+    workdaysNeeded,
+  };
+}
