@@ -1,37 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Simple HTTP Basic Auth gate. Set SITE_PASSWORD (and optionally SITE_USER)
-// as environment variables in Vercel's dashboard — never commit real
+export const AUTH_COOKIE = "attendance_auth";
+
+// Redirects to a real login page instead of the browser's native
+// Basic Auth popup. Set SITE_PASSWORD (and optionally SITE_USER) as
+// environment variables in Vercel's dashboard — never commit real
 // credentials into this file or into git.
 export function middleware(req: NextRequest) {
-  const expectedUser = process.env.SITE_USER || "griffin";
   const expectedPass = process.env.SITE_PASSWORD;
 
-  // If no password is configured (e.g. local dev without a .env.local),
-  // don't lock anyone out — just let requests through.
+  // No password configured (e.g. local dev without a .env.local) —
+  // don't lock anyone out.
   if (!expectedPass) {
     return NextResponse.next();
   }
 
-  const authHeader = req.headers.get("authorization");
+  const { pathname } = req.nextUrl;
 
-  if (authHeader?.startsWith("Basic ")) {
-    const encoded = authHeader.slice("Basic ".length);
-    // atob (not Buffer) since middleware runs in the Edge runtime.
-    const decoded = atob(encoded);
-    const separatorIndex = decoded.indexOf(":");
-    const user = decoded.slice(0, separatorIndex);
-    const pass = decoded.slice(separatorIndex + 1);
-
-    if (user === expectedUser && pass === expectedPass) {
-      return NextResponse.next();
-    }
+  // Always let the login page and its API route through, or logging in
+  // would be impossible (the login page itself would get redirected).
+  if (pathname === "/login" || pathname === "/api/login") {
+    return NextResponse.next();
   }
 
-  return new NextResponse("Authentication required", {
-    status: 401,
-    headers: { "WWW-Authenticate": 'Basic realm="Attendance Checker"' },
-  });
+  const cookie = req.cookies.get(AUTH_COOKIE)?.value;
+  if (cookie === expectedPass) {
+    return NextResponse.next();
+  }
+
+  const loginUrl = new URL("/login", req.url);
+  loginUrl.searchParams.set("from", pathname);
+  return NextResponse.redirect(loginUrl);
 }
 
 export const config = {
