@@ -14,6 +14,7 @@ import AttendanceCalendar from "@/components/AttendanceCalendar";
 import SummaryBar from "@/components/SummaryBar";
 import EditEntryModal from "@/components/EditEntryModal";
 import CelebrationOverlay from "@/components/CelebrationOverlay";
+import { downloadPdf, exportDtrPdf } from "@/lib/dtr";
 
 const data = attendanceData as AttendanceData;
 const STORAGE_KEY = "attendance-checker-records-v1";
@@ -128,6 +129,20 @@ export default function Home() {
     closeEditor();
   }
 
+  const [exporting, setExporting] = useState(false);
+
+  async function handleExportDtr() {
+    setExporting(true);
+    try {
+      const bytes = await exportDtrPdf(records);
+      downloadPdf(bytes, "DTR.pdf");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to export DTR.");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   return (
     <main className="flex h-screen w-screen gap-6 overflow-hidden bg-slate-100 p-6">
       <div className="w-96 shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
@@ -140,7 +155,12 @@ export default function Home() {
 
       <div className="flex flex-1 flex-col gap-6 overflow-hidden">
         <div className="shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-          <SummaryBar summary={summary} estimate={estimate} />
+          <SummaryBar
+            summary={summary}
+            estimate={estimate}
+            onExport={handleExportDtr}
+            exporting={exporting}
+          />
         </div>
         <div className="flex-1 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
           <AttendanceCalendar

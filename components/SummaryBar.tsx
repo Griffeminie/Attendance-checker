@@ -7,9 +7,13 @@ import { formatDateShort } from "@/lib/attendance";
 export default function SummaryBar({
   summary,
   estimate,
+  onExport,
+  exporting,
 }: {
   summary: AttendanceData["summary"];
   estimate: CompletionEstimate | null;
+  onExport: () => void;
+  exporting: boolean;
 }) {
   const pct = Math.min(
     100,
@@ -56,6 +60,13 @@ export default function SummaryBar({
         </div>
       </div>
       <span className="text-sm font-medium text-slate-500">{pct}%</span>
+      <button
+        onClick={onExport}
+        disabled={exporting}
+        className="shrink-0 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+      >
+        {exporting ? "Exporting…" : "Export DTR"}
+      </button>
     </div>
   );
 }
