@@ -17,7 +17,10 @@ function fmtTime(t: string): string {
 }
 
 function fmtHours(h: number): string {
-  return h.toFixed(2);
+  const totalMinutes = Math.round(h * 60);
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+  return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
 }
 
 function monthLabel(monthKey: string): string {
