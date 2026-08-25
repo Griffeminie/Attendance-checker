@@ -14,13 +14,15 @@ import AttendanceCalendar from "@/components/AttendanceCalendar";
 import SummaryBar from "@/components/SummaryBar";
 import EditEntryModal from "@/components/EditEntryModal";
 import CelebrationOverlay from "@/components/CelebrationOverlay";
-import { downloadPdf, exportDtrPdf } from "@/lib/dtr";
+import { DEFAULT_STUDENT_NAME, downloadPdf, exportDtrPdf } from "@/lib/dtr";
 
 const data = attendanceData as AttendanceData;
 const STORAGE_KEY = "attendance-checker-records-v1";
+const NAME_STORAGE_KEY = "attendance-checker-student-name-v1";
 
 export default function Home() {
   const [records, setRecords] = useState<AttendanceRecord[]>(data.records);
+  const [studentName, setStudentName] = useState(DEFAULT_STUDENT_NAME);
   const [hydrated, setHydrated] = useState(false);
 
   // Load anything saved in this browser once, on first mount. This has to
@@ -36,6 +38,8 @@ export default function Home() {
         // ignore corrupt/old data, fall back to the seed data already set
       }
     }
+    const savedName = window.localStorage.getItem(NAME_STORAGE_KEY);
+    if (savedName) setStudentName(savedName);
     setHydrated(true);
   }, []);
 
@@ -46,6 +50,11 @@ export default function Home() {
     if (!hydrated) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
   }, [records, hydrated]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    window.localStorage.setItem(NAME_STORAGE_KEY, studentName);
+  }, [studentName, hydrated]);
 
   const byDate = useMemo(() => recordsByDate(records), [records]);
   const summary = useMemo(
@@ -131,10 +140,13 @@ export default function Home() {
 
   const [exporting, setExporting] = useState(false);
 
-  async function handleExportDtr() {
+    async function handleExportDtr() {
     setExporting(true);
     try {
-      const bytes = await exportDtrPdf(records);
+      const bytes = await exportDtrPdf(
+        records,
+        studentName.trim() || DEFAULT_STUDENT_NAME
+      );
       downloadPdf(bytes, "DTR.pdf");
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to export DTR.");
@@ -155,11 +167,13 @@ export default function Home() {
 
       <div className="flex flex-1 flex-col gap-6 overflow-hidden">
         <div className="shrink-0 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">
-          <SummaryBar
+            <SummaryBar
             summary={summary}
             estimate={estimate}
             onExport={handleExportDtr}
             exporting={exporting}
+            studentName={studentName}
+            onStudentNameChange={setStudentName}
           />
         </div>
         <div className="flex-1 overflow-hidden rounded-2xl border border-slate-200 shadow-sm">

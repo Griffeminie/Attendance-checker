@@ -9,11 +9,15 @@ export default function SummaryBar({
   estimate,
   onExport,
   exporting,
+  studentName,
+  onStudentNameChange,
 }: {
   summary: AttendanceData["summary"];
   estimate: CompletionEstimate | null;
   onExport: () => void;
   exporting: boolean;
+  studentName: string;
+  onStudentNameChange: (name: string) => void;
 }) {
   const pct = Math.min(
     100,
@@ -59,7 +63,14 @@ export default function SummaryBar({
           />
         </div>
       </div>
-      <span className="text-sm font-medium text-slate-500">{pct}%</span>
+            <span className="text-sm font-medium text-slate-500">{pct}%</span>
+      <input
+        type="text"
+        value={studentName}
+        onChange={(e) => onStudentNameChange(e.target.value)}
+        placeholder="Your name"
+        className="w-40 shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+      />
       <button
         onClick={onExport}
         disabled={exporting}
