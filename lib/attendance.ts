@@ -70,8 +70,15 @@ export function toDateKey(d: Date): string {
   return `${y}-${m}-${day}`;
 }
 
-// Computes raw/actual hours from a time-in/time-out pair, applying the same
-// "deduct 1hr lunch if the span crosses 12:00-13:00" rule as the seed data.
+// Official work window: time logged outside this range doesn't count.
+// Arriving before 8:00 AM doesn't earn extra credit; staying past 5:30 PM
+// doesn't either — only the overlap with [8:00 AM, 5:30 PM] is counted.
+const WORK_START_HOURS = 8; // 8:00 AM
+const WORK_END_HOURS = 17.5; // 5:30 PM
+
+// Computes raw/actual hours from a time-in/time-out pair, clamped to the
+// official work window, applying the same "deduct 1hr lunch if the span
+// crosses 12:00-13:00" rule as the seed data.
 export function computeHoursFromTimes(
   timeIn: string,
   timeOut: string
@@ -80,8 +87,8 @@ export function computeHoursFromTimes(
     const [h, m] = t.split(":").map(Number);
     return h + m / 60;
   };
-  const inDec = toDecimal(timeIn);
-  const outDec = toDecimal(timeOut);
+  const inDec = Math.max(toDecimal(timeIn), WORK_START_HOURS);
+  const outDec = Math.min(toDecimal(timeOut), WORK_END_HOURS);
   const rawHours = Math.max(0, outDec - inDec);
   const lunchDeducted = inDec < 13 && outDec > 12;
   const actualHours = lunchDeducted ? Math.max(0, rawHours - 1) : rawHours;
