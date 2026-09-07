@@ -153,6 +153,7 @@ export async function importDtrPdf(file: File): Promise<AttendanceRecord[]> {
   }
 
   const pdfjs = await import("pdfjs-dist/legacy/build/pdf.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.mjs";
   const bytes = new Uint8Array(await file.arrayBuffer());
   const pdf = await pdfjs.getDocument({ data: bytes }).promise;
   const records: AttendanceRecord[] = [];

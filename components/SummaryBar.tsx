@@ -75,27 +75,29 @@ export default function SummaryBar({
         placeholder="Your name"
         className="w-40 shrink-0 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
       />
-      <button
-        onClick={onExport}
-        disabled={exporting}
-        className="shrink-0 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
-      >
-        {exporting ? "Exporting…" : "Export DTR"}
-      </button>
-      <label className="shrink-0 cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 has-[:disabled]:cursor-wait has-[:disabled]:opacity-50">
-        {importing ? "Importing…" : "Import DTR"}
-        <input
-          type="file"
-          accept="application/pdf,.pdf"
-          className="sr-only"
-          disabled={importing}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) onImport(file);
-            e.currentTarget.value = "";
-          }}
-        />
-      </label>
+      <div className="flex shrink-0 flex-col gap-2">
+        <button
+          onClick={onExport}
+          disabled={exporting}
+          className="w-40 rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+        >
+          {exporting ? "Exporting…" : "Export DTR"}
+        </button>
+        <label className="w-40 cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-center text-sm font-medium text-slate-600 transition hover:bg-slate-50 has-[:disabled]:cursor-wait has-[:disabled]:opacity-50">
+          {importing ? "Importing…" : "Import DTR"}
+          <input
+            type="file"
+            accept="application/pdf,.pdf"
+            className="sr-only"
+            disabled={importing}
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onImport(file);
+              e.currentTarget.value = "";
+            }}
+          />
+        </label>
+      </div>
     </div>
   );
 }
