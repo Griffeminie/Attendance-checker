@@ -9,6 +9,8 @@ export default function SummaryBar({
   estimate,
   onExport,
   exporting,
+  onImport,
+  importing,
   studentName,
   onStudentNameChange,
 }: {
@@ -16,6 +18,8 @@ export default function SummaryBar({
   estimate: CompletionEstimate | null;
   onExport: () => void;
   exporting: boolean;
+  onImport: (file: File) => void;
+  importing: boolean;
   studentName: string;
   onStudentNameChange: (name: string) => void;
 }) {
@@ -78,6 +82,20 @@ export default function SummaryBar({
       >
         {exporting ? "Exporting…" : "Export DTR"}
       </button>
+      <label className="shrink-0 cursor-pointer rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 has-[:disabled]:cursor-wait has-[:disabled]:opacity-50">
+        {importing ? "Importing…" : "Import DTR"}
+        <input
+          type="file"
+          accept="application/pdf,.pdf"
+          className="sr-only"
+          disabled={importing}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) onImport(file);
+            e.currentTarget.value = "";
+          }}
+        />
+      </label>
     </div>
   );
 }

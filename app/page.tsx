@@ -15,6 +15,7 @@ import SummaryBar from "@/components/SummaryBar";
 import EditEntryModal from "@/components/EditEntryModal";
 import CelebrationOverlay from "@/components/CelebrationOverlay";
 import { DEFAULT_STUDENT_NAME, downloadPdf, exportDtrPdf } from "@/lib/dtr";
+import { importDtrPdf } from "@/lib/import-dtr";
 
 const data = attendanceData as AttendanceData;
 const STORAGE_KEY = "attendance-checker-records-v1";
@@ -139,8 +140,29 @@ export default function Home() {
   }
 
   const [exporting, setExporting] = useState(false);
+  const [importing, setImporting] = useState(false);
 
-    async function handleExportDtr() {
+  async function handleImportDtr(file: File) {
+    setImporting(true);
+    try {
+      const imported = await importDtrPdf(file);
+      setRecords((prev) => {
+        const merged = new Map(prev.map((record) => [record.date, record]));
+        for (const record of imported) merged.set(record.date, record);
+        return Array.from(merged.values()).sort((a, b) =>
+          a.date.localeCompare(b.date)
+        );
+      });
+      selectDate(imported[imported.length - 1].date);
+      alert(`Imported ${imported.length} attendance entries. Same-date entries were updated.`);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to import DTR.");
+    } finally {
+      setImporting(false);
+    }
+  }
+
+  async function handleExportDtr() {
     setExporting(true);
     try {
       const bytes = await exportDtrPdf(
@@ -172,6 +194,8 @@ export default function Home() {
             estimate={estimate}
             onExport={handleExportDtr}
             exporting={exporting}
+            onImport={handleImportDtr}
+            importing={importing}
             studentName={studentName}
             onStudentNameChange={setStudentName}
           />
